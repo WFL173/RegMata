@@ -158,5 +158,301 @@ char* Regex2Postfix(char* regex)
     return postfix.Data;
 }
 
+enum StateStatus
+{
+    STATE_NONE = 0,
+    STATE_START,
+    STATE_END,
+    STATE_STATUS_COUNT,
+};
+
+struct Transition;
+
+struct State     
+{
+    int Id;
+    int ListId;
+    StateStatus Status;
+    int NumberOfTransitions;
+    Transition* Transitions;
+};
+
+struct Transition
+{
+    State* Out;
+    unsigned int CharToBeRead;
+};
+
+State* StateInit(int transitionNumber)
+{
+    State* result = (State*)malloc(sizeof(State));
+    *result = {0};
+    result->NumberOfTransitions = transitionNumber;
+    result->Transitions = (Transition*)malloc(sizeof(Transition) * transitionNumber);
+
+    for (int i = 0; i < result->NumberOfTransitions; i++)
+    {
+        result->Transitions[i] = {0};
+    }
+
+    return result;
+}
+
+void StateFree(State* state)
+{
+    if (state->Transitions)
+    {
+        free(state->Transitions);
+    }
+    
+    free(state);
+}
+
+struct TransitionList
+{
+    Transition** Transitions;
+    int Size;
+};
+
+TransitionList* TransitionListInit(Transition* transition)
+{
+    TransitionList* list = (TransitionList*)malloc(sizeof(TransitionList));
+    list->Size = 1;
+    list->Transitions = (Transition**)malloc(sizeof(Transition*) * 1);
+    list->Transitions[0] = transition;
+
+    return list;
+}
+
+TransitionList* TransitionListAppend(TransitionList* list1, TransitionList* list2)
+{
+    TransitionList* list = (TransitionList*)malloc(sizeof(TransitionList));
+    list->Size = list1->Size + list2->Size;
+    list->Transitions = (Transition**)malloc(sizeof(Transition*) * list->Size);
+
+    for (int i = 0; i < list1->Size; i++)
+    {
+        list->Transitions[i] = list1->Transitions[i];
+    }
+    
+    for (int i = list1->Size; i < list2->Size + list1->Size; i++)
+    {   
+        list->Transitions[i] = list2->Transitions[i - list1->Size];
+    }
+    
+    free(list1->Transitions);
+    free(list2->Transitions);
+    free(list1);
+    free(list2);
+
+    return list;
+}
+
+void TransitionListPatch(TransitionList* list, State* state)
+{
+    for (int i = 0; i < list->Size; i++)
+    {
+        list->Transitions[i]->Out = state;
+    }
+}
+
+void TransitionListFree(TransitionList* list)
+{
+    free(list->Transitions);
+    free(list);
+}
+
+struct NFAFragment
+{
+    State* Start;
+    TransitionList* DanglingTransitions;
+    //Transition* DanglingTransitions[2]; // a dangling transition is a transition with no out state specified.
+};
+
+// NFA is an automata(graph) built with NFAFragments
+struct NFA
+{
+    State* Start;
+    int Size;
+};
+
+void NFAFree(NFA graph)
+{
+    ArrayList visitedList = ArrayList<bool>(graph.Size);
+    ArrayList<State*> freeList;
+    ArrayStack<State*> stack;
+    stack.Push(graph.Start);
+
+    for (int i = 0; stack.List.Size; i++)
+    {
+        State* current = stack.Pop();
+        visitedList.Data[current->Id] = true;
+        freeList.Add(current);   
+
+        for (int j = 0; j < current->NumberOfTransitions; j++)
+        {
+            if (!visitedList.Data[current->Transitions[j].Out->Id])
+            {  
+                stack.Push(current->Transitions[j].Out);    
+            }
+            
+        }
+        
+    }
+    
+    visitedList.Free();
+    stack.Free();
+
+    for (int i = 0; i < freeList.Size; i++)
+    {
+        State* state = freeList.Data[i];
+        StateFree(state);
+    }
+    
+    freeList.Free();
+}
+
+NFA Postfix2NFA(char* postfix)
+{
+    ArrayStack<NFAFragment> stack;
+	NFAFragment e0 = {0};
+	NFAFragment e1 = {0};
+	NFAFragment e2 = {0};
+    NFA result = {0};
+
+    State* state = {0};
+    int counter = 0;
+
+	for (int i = 0; postfix[i]; i++)
+    {
+        switch (postfix[i])
+        {
+            case '-':
+            {
+                e2 = stack.Pop();
+                e1 = stack.Pop();
+                
+                // e1.DanglingTransitions[0]->Out = e2.Start;
+                TransitionListPatch(e1.DanglingTransitions, e2.Start);
+                TransitionListFree(e1.DanglingTransitions);
+
+                NFAFragment frag = {0};
+                frag.Start = e1.Start;
+                frag.DanglingTransitions = e2.DanglingTransitions;             
+
+                stack.Push(frag);
+
+            } break;
+            
+            case '|':
+            {
+                e2 = stack.Pop();
+                e1 = stack.Pop();
+                
+                state = StateInit(2);
+                state->Transitions[0].Out = e1.Start;
+                state->Transitions[1].Out = e2.Start;
+
+                state->Id = counter++;
+
+                NFAFragment frag = {0};
+                frag.Start = state;
+                frag.DanglingTransitions = TransitionListAppend(e1.DanglingTransitions, e2.DanglingTransitions);
+                // frag.DanglingTransitions[0] = e1.DanglingTransitions[0];
+                // frag.DanglingTransitions[1] = e2.DanglingTransitions[0];
+
+                stack.Push(frag);
+            } break;
+            
+            case '?':
+            {
+                e0 = stack.Pop();
+                state = StateInit(2);
+
+                state->Id = counter++;
+
+                state->Transitions[0].Out = e0.Start;
+
+                NFAFragment frag = {0};
+                frag.Start = state;
+                frag.DanglingTransitions = TransitionListAppend(e0.DanglingTransitions, TransitionListInit(&state->Transitions[1]));
+
+                stack.Push(frag);
+            } break;
+            
+            case '*':
+            {
+                e0 = stack.Pop();
+                
+                state = StateInit(2);
+                state->Transitions[0].Out = e0.Start;
+
+                state->Id = counter++;
+
+                TransitionListPatch(e0.DanglingTransitions, state);
+                TransitionListFree(e0.DanglingTransitions);
+                // e0.DanglingTransitions[0]->Out = state;
+
+                NFAFragment frag = {0};
+                frag.Start = state;
+                frag.DanglingTransitions = TransitionListInit(&state->Transitions[1]);
+                // frag.DanglingTransitions[0] = &state->Transitions[1];
+
+                stack.Push(frag);
+            } break;
+            
+            case '+':
+            {
+                e0 = stack.Pop();
+
+                state = StateInit(2);
+                state->Transitions[0].Out = e0.Start;
+
+                state->Id = counter++;
+
+                TransitionListPatch(e0.DanglingTransitions, state);
+                TransitionListFree(e0.DanglingTransitions);
+
+                NFAFragment frag = {0};
+                frag.Start = e0.Start;
+                frag.DanglingTransitions = TransitionListInit(&state->Transitions[1]);
+
+                stack.Push(frag);
+
+            } break;
+
+            default:
+            {
+                state = StateInit(1);
+                state->Transitions[0].CharToBeRead = postfix[i];
+            
+                state->Id = counter++;
+
+                NFAFragment frag = {0};
+                frag.Start = state;
+                frag.DanglingTransitions = TransitionListInit(&state->Transitions[0]);
+                // frag.DanglingTransitions[0] = &state->Transitions[0];
+
+                stack.Push(frag);
+            } break;
+        }
+    }
+    
+    e0 = stack.Pop();
+    stack.Free();
+
+    state = StateInit(0);
+    state->Status = STATE_END;
+
+    state->Id = counter;
+
+    TransitionListPatch(e0.DanglingTransitions, state);
+    TransitionListFree(e0.DanglingTransitions);
+
+    result.Start = e0.Start;
+    result.Size = counter + 1;
+
+    return result;
+}
 
 #endif

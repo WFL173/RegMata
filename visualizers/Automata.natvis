@@ -1,17 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?> 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010"> 
-    <Type Name="ArrayList&lt;*&gt;">
-      <Expand>
-        <Item Name="[Size]" ExcludeView="simple">Size</Item>
-        <Item Name="[Capacity]" ExcludeView="simple">Capacity</Item>
-        <Synthetic Name="[Data]">
-          <Expand>
-            <ArrayItems>
-              <Size>Size</Size>
-              <ValuePointer>Data</ValuePointer>
-            </ArrayItems>
-          </Expand>
-        </Synthetic>
-      </Expand>
-    </Type>
+  <Type Name="Transition">
+    <Expand>
+      <!-- <Item Name="[In]" ExcludeView="simple" Condition="In == 0">empty</Item> -->
+      <!-- <Item Name="[Out]" ExcludeView="simple" Condition="Out == 0">empty</Item> -->
+      <Item Name="[In]" ExcludeView="simple">In</Item>
+      <Item Name="[Out]" ExcludeView="simple">Out</Item>
+      <Item Name="[CharToBeRead]" ExcludeView="simple">CharToBeRead</Item>
+    </Expand>
+  </Type>
+  <Type Name="ArrayList&lt;*&gt;">
+    <Expand>
+      <Item Name="[Size]" ExcludeView="simple">Size</Item>
+      <Item Name="[Capacity]" ExcludeView="simple">Capacity</Item>
+      <Synthetic Name="[Data]">
+        <Expand>
+          <ArrayItems>
+            <Size>Size</Size>
+            <ValuePointer>Data</ValuePointer>
+          </ArrayItems>
+        </Expand>
+      </Synthetic>
+    </Expand>
+  </Type>
 </AutoVisualizer>
