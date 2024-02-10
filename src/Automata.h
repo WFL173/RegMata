@@ -103,11 +103,11 @@ char* Regex2Postfix(char* regex)
         }
         else if (currentChar == '(')
         {
-            while (operators.List.Size)
-            {
-                char op = operators.Pop();
-                postfix.Add(op);
-            }
+            // while (operators.List.Size)
+            // {
+            //     char op = operators.Pop();
+            //     postfix.Add(op);
+            // }
             operators.Push('(');
         }
         else if (currentChar == ')')
@@ -131,7 +131,7 @@ char* Regex2Postfix(char* regex)
                 {
                     operators.Push('-');
                 }
-                else // concat operator has less precedence then top of stack pop from stack until lower precedence is found
+                else // concat operator has less precedence then pop from top of stack stack until lower precedence is found
                 {
                     while (operators.List.Size && IsBinaryRegexOperator('-') <= IsBinaryRegexOperator(operators.Peek()))
                     {
