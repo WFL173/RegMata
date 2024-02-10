@@ -1,0 +1,16 @@
+{
+	// there needs to be a int and src folder in the same level as the .vscode folder
+	// the compiler will generate a build folder. After generation it can be deleted and will not cause
+	// problems for future build tasks. all the source files have to be in the src folder and cannot be
+	// in a subfolder in the source folder (try to find a fix for this). int and src dirs are mandatory.
+	// the build task will fail without them.
+	"version": "2.0.0",
+	"tasks": 
+	[
+		{
+			"type": "shell",
+			"label": "build",
+			"command": "build.bat"
+		}
+	]
+}
