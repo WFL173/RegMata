@@ -42,7 +42,7 @@ struct ArrayQueue
 };
 
 #ifdef ARRAYQUEUE_EXAMPLE
-void QueueExample()
+void ArrayQueueExample()
 {
     ArrayQueue queue = ArrayQueue<int>();
 

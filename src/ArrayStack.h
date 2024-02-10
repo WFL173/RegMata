@@ -58,6 +58,8 @@ void ArrayStackExample()
     element = stack.Pop();
     element = stack.Pop();
     element = stack.Pop();
+
+    stack.Free();
 }
 #endif
 
