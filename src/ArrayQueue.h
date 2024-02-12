@@ -7,11 +7,6 @@ struct ArrayQueue
 {
     ArrayList<T> List;
 
-    ArrayQueue() 
-    {
-
-    }
-
     void Free()
     {
         List.Free();

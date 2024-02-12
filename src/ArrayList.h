@@ -15,31 +15,6 @@ struct ArrayList
         Capacity = capacity;
         Data = (T*)malloc(sizeof(T) * Capacity);
     }
-    
-    ArrayList()
-    {
-        Init(0, 4);
-    }
-
-    ArrayList(int capacity)
-    {
-        Init(capacity, capacity);
-        for (int i = 0; i < Capacity; i++)
-        {
-            Data[i] = {0};
-        }
-        
-    }
-
-    ArrayList(int size, int capacity)
-    {
-        Init(size, capacity);
-        for (int i = 0; i < Capacity; i++)
-        {
-            Data[i] = {0};
-        }
-        
-    }
 
     void Free()
     {
@@ -65,7 +40,7 @@ struct ArrayList
     {
         if (Size + 1 > Capacity)
         {
-            Capacity *= 2;
+            Capacity = Capacity * 2 + 1;
             T* newData = (T*)malloc(sizeof(T) * Capacity);
             for (int i = 0; i < Size; i++)
             {
@@ -85,7 +60,7 @@ struct ArrayList
     {
         if (Size + 1 > Capacity)
         {
-            Capacity *= 2;
+            Capacity = Capacity * 2 + 1;
             T* newData = (T*)malloc(sizeof(T) * Capacity);
             for (int i = 0; i < Size; i++)
             {

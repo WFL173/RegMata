@@ -7,11 +7,6 @@ struct ArrayStack
 {
     ArrayList<T> List;
 
-    ArrayStack()
-    {
-
-    }
-
     void Free()
     {
         List.Free();

@@ -68,8 +68,8 @@ int IsRegexOperator(char key)
 
 char* Regex2Postfix(char* regex)
 {
-    ArrayList<char> postfix;
-    ArrayStack<char> operators;
+    ArrayList<char> postfix = {0};
+    ArrayStack<char> operators = {0};
 
     if(!regex)
     {
@@ -278,9 +278,10 @@ struct NFA
 
 void NFAFree(NFA graph)
 {
-    ArrayList visitedList = ArrayList<bool>(graph.Size);
-    ArrayList<State*> freeList;
-    ArrayStack<State*> stack;
+    ArrayList<bool> visitedList = {0};
+    visitedList.Init(graph.Size, graph.Size);
+    ArrayList<State*> freeList = {0};
+    ArrayStack<State*> stack = {0};
     stack.Push(graph.Start);
 
     for (int i = 0; stack.List.Size; i++)
@@ -314,7 +315,7 @@ void NFAFree(NFA graph)
 
 NFA Postfix2NFA(char* postfix)
 {
-    ArrayStack<NFAFragment> stack;
+    ArrayStack<NFAFragment> stack = {0};
 	NFAFragment e0 = {0};
 	NFAFragment e1 = {0};
 	NFAFragment e2 = {0};
