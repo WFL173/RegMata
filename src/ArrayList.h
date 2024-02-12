@@ -14,6 +14,7 @@ struct ArrayList
         Size = size;
         Capacity = capacity;
         Data = (T*)malloc(sizeof(T) * Capacity);
+        memset(Data, 0, Capacity * sizeof(T));
     }
 
     void Free()
@@ -48,7 +49,7 @@ struct ArrayList
             }
             free(Data);
             Data = newData;
-            
+            memset((Data + Size), 0, (Capacity - Size) * sizeof(T));
         }
         
         Data[Size++] = element;
@@ -68,7 +69,7 @@ struct ArrayList
             }
             free(Data);
             Data = newData;
-            
+            memset((Data + Size), 0, (Capacity - Size) * sizeof(T));
         }
         Size++;
 
