@@ -95,11 +95,6 @@ char* Regex2Postfix(char* regex)
         }
         else if (currentChar == '(')
         {
-            // while (operators.List.Size)
-            // {
-            //     char op = operators.Pop();
-            //     postfix.Add(op);
-            // }
             operators.Push('(');
         }
         else if (currentChar == ')')
@@ -257,8 +252,7 @@ void TransitionListFree(TransitionList* list)
 struct NFAFragment
 {
     State* Start;
-    TransitionList* DanglingTransitions;
-    //Transition* DanglingTransitions[2]; // a dangling transition is a transition with no out state specified.
+    TransitionList* DanglingTransitions; // a dangling transition is a transition with no out state specified.
 };
 
 // NFA is an automata(graph) built with NFAFragments
@@ -325,7 +319,6 @@ NFA Postfix2NFA(char* postfix)
                 e2 = stack.Pop();
                 e1 = stack.Pop();
                 
-                // e1.DanglingTransitions[0]->Out = e2.Start;
                 TransitionListPatch(e1.DanglingTransitions, e2.Start);
                 TransitionListFree(e1.DanglingTransitions);
 
@@ -351,8 +344,6 @@ NFA Postfix2NFA(char* postfix)
                 NFAFragment frag = {0};
                 frag.Start = state;
                 frag.DanglingTransitions = TransitionListAppend(e1.DanglingTransitions, e2.DanglingTransitions);
-                // frag.DanglingTransitions[0] = e1.DanglingTransitions[0];
-                // frag.DanglingTransitions[1] = e2.DanglingTransitions[0];
 
                 stack.Push(frag);
             } break;
@@ -384,12 +375,10 @@ NFA Postfix2NFA(char* postfix)
 
                 TransitionListPatch(e0.DanglingTransitions, state);
                 TransitionListFree(e0.DanglingTransitions);
-                // e0.DanglingTransitions[0]->Out = state;
 
                 NFAFragment frag = {0};
                 frag.Start = state;
                 frag.DanglingTransitions = TransitionListInit(&state->Transitions[1]);
-                // frag.DanglingTransitions[0] = &state->Transitions[1];
 
                 stack.Push(frag);
             } break;
@@ -424,7 +413,6 @@ NFA Postfix2NFA(char* postfix)
                 NFAFragment frag = {0};
                 frag.Start = state;
                 frag.DanglingTransitions = TransitionListInit(&state->Transitions[0]);
-                // frag.DanglingTransitions[0] = &state->Transitions[0];
 
                 stack.Push(frag);
             } break;
