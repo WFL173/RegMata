@@ -10,11 +10,15 @@ int main ()
 {
     _CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
 
-    char regex[] = "aaba*";
+    char regex[] = "abcd+e";
 
     char *postfix = Regex2Postfix(regex);
 
     NFA graph = Postfix2NFA(postfix);
+
+    int matched = Match(graph, "ab");
+    matched = Match(graph, "abce");
+    matched = Match(graph, "abcddddde");
 
     free(postfix);
     NFAFree(graph);

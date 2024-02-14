@@ -34,16 +34,8 @@ int IsRegexOperator(char key)
     
     switch (key)
     {
-        case '*':
-        {
-            precedence = 3;
-        } break;
-        
+        case '*':      
         case '?':
-        {
-            precedence = 3;
-        } break;
-        
         case '+':
         {
             precedence = 3;
@@ -454,6 +446,88 @@ NFA Postfix2NFA(char* postfix)
     result.Size = counter + 1;
 
     return result;
+}
+
+void AddState(ArrayList<State*>* list, State* state, int listId)
+{
+    if (!state || state->ListId == listId)
+    {
+        return;
+    }
+    state->ListId = listId;
+    if (state->NumberOfTransitions == 2)
+    {
+        AddState(list, state->Transitions[0].Out, listId);
+        AddState(list, state->Transitions[1].Out, listId);
+        return;
+    }
+    list->Add(state);
+}
+
+int IsMatch(ArrayList<State*>* currentStates)
+{
+    for (int i = 0; i < currentStates->Size; i++)
+    {
+        if (currentStates->Data[i]->Status == STATE_END)
+        {
+            return 1;
+        }
+    }
+    
+    return 0;
+}
+
+int Match(NFA graph, char* input)
+{
+    ArrayList<State*> currentStates = {0};
+    ArrayList<State*> nextStates = {0};
+    currentStates.Init(0, graph.Size);
+    nextStates.Init(0, graph.Size);
+    int match = 0;
+
+    currentStates.Add(graph.Start);
+    static int listId = 0;
+    bool charRead = false;
+
+    for (; *input; input++)
+    {
+        listId++;
+        nextStates.Size = 0;
+        for (int i = 0; i < currentStates.Size; i++)
+        {
+            State* currentState = currentStates.Data[i];
+            for (int j = 0; j < currentState->NumberOfTransitions; j++)
+            {
+                Transition currentTransition = currentState->Transitions[j];
+                if (currentTransition.CharToBeRead == *input)
+                {
+                    charRead = true;
+                    AddState(&nextStates, currentTransition.Out, listId);
+                }
+                else if (currentTransition.CharToBeRead == '\0')
+                {
+                    AddState(&nextStates, currentTransition.Out, listId);
+                }
+            }
+        }
+
+        if (!charRead)
+        {
+            input--;
+        }
+        charRead = false;
+
+        ArrayList<State*> temp = currentStates;
+        currentStates = nextStates;
+        nextStates = temp;
+    }
+
+    match = IsMatch(&currentStates);
+    
+    currentStates.Free();
+    nextStates.Free();
+
+    return match;
 }
 
 #endif
