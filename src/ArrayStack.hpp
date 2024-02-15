@@ -1,6 +1,6 @@
 #ifndef ARRAYSTACK_H
 #define ARRAYSTACK_H
-#include "ArrayList.h"
+#include "ArrayList.hpp"
 
 template<typename T>
 struct ArrayStack

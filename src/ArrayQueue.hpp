@@ -1,6 +1,6 @@
 #ifndef ARRAYQUEUE_H
 #define ARRAYQUEUE_H
-#include "ArrayList.h"
+#include "ArrayList.hpp"
 
 template<typename T>
 struct ArrayQueue

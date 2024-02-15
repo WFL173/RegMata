@@ -2,7 +2,7 @@
 #ifndef AUTOMATATEST_H
 #define AUTOMATATEST_H
 
-#include "ArrayStack.h"
+#include "ArrayStack.hpp"
 
 // returns values > 0 if key is a regex op, 0 if key is not a regex op.
 int IsBinaryRegexOperator(char key)
