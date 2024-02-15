@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "Automata.h"
+#include "Automata.hpp"
 
 #define ArrayCount(x) sizeof((x)) / sizeof((x)[0])
 
