@@ -6,29 +6,6 @@
 #include "ArrayStack.hpp"
 
 // returns values > 0 if key is a regex op, 0 if key is not a regex op.
-int IsBinaryRegexOperator(char key)
-{
-    int precedence = 0;
-    
-    switch (key)
-    {
-        case '-':
-        {
-            precedence = 2;
-        } break;
-        
-        case '|':
-        {
-            precedence = 1;
-        } break;
-        
-        default:
-            break;
-    }
-
-    return precedence;
-}
-
 int IsRegexOperator(char key)
 {
     int precedence = 0;
@@ -69,28 +46,47 @@ char* Regex2Postfix(char* regex)
         return 0;
     }
 
+    bool implicitOperatorFound = false;
+
     for (int i = 0; regex[i]; i++)
     {
         char currentChar = regex[i];
         char nextChar = regex[i + 1];
-        int currentCharPrecedence = IsBinaryRegexOperator(currentChar); 
-        int nextCharIsOperator = IsRegexOperator(nextChar);
-        
-        if (currentCharPrecedence) // if current char is a binary operator
+        int currentPrecedence = IsRegexOperator(currentChar); 
+        int nextPrecedence = IsRegexOperator(nextChar);
+                
+        if (implicitOperatorFound) // concat operator is the implicit operator.
+        {
+            nextChar = currentChar;
+            currentChar = '-';
+            currentPrecedence = IsRegexOperator(currentChar);
+            nextPrecedence = IsRegexOperator(nextChar);
+            i--;
+            implicitOperatorFound = false;
+        }
+
+        if (currentPrecedence) // if current char is an operator
         {
             // if the current operator has higher precedence than the top element of the operators push it on stack
-            if (operators.List.Size == 0 || currentCharPrecedence > IsBinaryRegexOperator(operators.Peek()))
+            if (operators.List.Size == 0 || currentPrecedence > IsRegexOperator(operators.Peek()))
             {
                 operators.Push(currentChar);
             }
             else // current operator has less precedence then top of stack pop from stack until lower precedence is found
             {
-                while (operators.List.Size && currentCharPrecedence <= IsBinaryRegexOperator(operators.Peek()))
+                while (operators.List.Size && currentPrecedence <= IsRegexOperator(operators.Peek()))
                 {
                     char op = operators.Pop();
                     postfix.Add(op);
                 }
                 operators.Push(currentChar);
+            }
+            
+            bool unaryOperator = currentPrecedence > 2;
+
+            if (unaryOperator && !nextPrecedence)
+            {
+                implicitOperatorFound = true;
             }
             
         }
@@ -110,28 +106,13 @@ char* Regex2Postfix(char* regex)
         else // if current char is an operand
         {
             postfix.Add(regex[i]);
-            // if next char is an operand and not the zero character and not right parentheses
-            if (!nextCharIsOperator && nextChar && nextChar != ')') 
-            {
-                // push concat operator onto the operator stack.
-                // if the concat operator has higher precedence than the top element of the operators push it onto stack
-                if (operators.List.Size == 0 || IsBinaryRegexOperator('-') > IsBinaryRegexOperator(operators.Peek()))
-                {
-                    operators.Push('-');
-                }
-                else // concat operator has less precedence then pop from top of stack stack until lower precedence is found
-                {
-                    while (operators.List.Size && IsBinaryRegexOperator('-') <= IsBinaryRegexOperator(operators.Peek()))
-                    {
-                        char op = operators.Pop();
-                        postfix.Add(op);
-                    }
-                    operators.Push('-');
-                }
-            }
             
+            // nextchar is not an operator, zero char and right parenthesis
+            if (!nextPrecedence && nextChar && nextChar != ')')
+            {
+                implicitOperatorFound = true;
+            }
         }
-        
     }
 
     while (operators.List.Size)
