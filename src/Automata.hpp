@@ -4,6 +4,7 @@
 
 #include "ArrayQueue.hpp"
 #include "ArrayStack.hpp"
+#define BIT_COUNT(x) (sizeof(x) * 8)
 
 // returns values > 0 if key is a regex op, 0 if key is not a regex op.
 int IsRegexOperator(char key)
@@ -146,10 +147,23 @@ struct State
     Transition* Transitions;
 };
 
+union CharSet
+{
+    struct 
+    {
+        unsigned long long LowLow;
+        unsigned long long LowHigh;
+        unsigned long long HighLow;
+        unsigned long long HighHigh;
+    };
+    unsigned long long Set[4];
+};
+
+
 struct Transition
 {
     State* Out;
-    unsigned int CharToBeRead;
+    CharSet ReadableChars;
 };
 
 State* StateInit(int transitionNumber)
@@ -292,6 +306,9 @@ NFA Postfix2NFA(char* postfix)
     State* state = {0};
     int counter = 0;
 
+    unsigned int zeroSetIndex = '\0' / BIT_COUNT(long long); 
+    unsigned long long zeroBitIndex = (long long) 1 << ('\0' % BIT_COUNT(long long)); 
+
 	for (int i = 0; postfix[i]; i++)
     {
         switch (postfix[i])
@@ -321,6 +338,11 @@ NFA Postfix2NFA(char* postfix)
                 state->Transitions[0].Out = e1.Start;
                 state->Transitions[1].Out = e2.Start;
 
+                // setting up readable characters the new state can read
+                // this new state reads the '\0' character
+                state->Transitions[0].ReadableChars.Set[zeroSetIndex] = zeroBitIndex;
+                state->Transitions[1].ReadableChars.Set[zeroSetIndex] = zeroBitIndex;
+
                 state->Id = counter++;
 
                 NFAFragment frag = {0};
@@ -333,11 +355,16 @@ NFA Postfix2NFA(char* postfix)
             case '?':
             {
                 e0 = stack.Pop();
+
                 state = StateInit(2);
+                state->Transitions[0].Out = e0.Start;
+
+                // setting up readable characters the new state can read
+                // this new state reads the '\0' character
+                state->Transitions[0].ReadableChars.Set[zeroSetIndex] = zeroBitIndex;
+                state->Transitions[1].ReadableChars.Set[zeroSetIndex] = zeroBitIndex;
 
                 state->Id = counter++;
-
-                state->Transitions[0].Out = e0.Start;
 
                 NFAFragment frag = {0};
                 frag.Start = state;
@@ -352,6 +379,11 @@ NFA Postfix2NFA(char* postfix)
                 
                 state = StateInit(2);
                 state->Transitions[0].Out = e0.Start;
+
+                // setting up readable characters the new state can read
+                // this new state reads the '\0' character
+                state->Transitions[0].ReadableChars.Set[zeroSetIndex] = zeroBitIndex;
+                state->Transitions[1].ReadableChars.Set[zeroSetIndex] = zeroBitIndex;
 
                 state->Id = counter++;
 
@@ -372,6 +404,10 @@ NFA Postfix2NFA(char* postfix)
                 state = StateInit(2);
                 state->Transitions[0].Out = e0.Start;
 
+                // setting up readable characters the new state can read
+                state->Transitions[0].ReadableChars.Set[zeroSetIndex] = zeroBitIndex;
+                state->Transitions[1].ReadableChars.Set[zeroSetIndex] = zeroBitIndex;
+
                 state->Id = counter++;
 
                 TransitionListPatch(e0.DanglingTransitions, state);
@@ -385,10 +421,37 @@ NFA Postfix2NFA(char* postfix)
 
             } break;
 
+            case '.':
+            {
+                unsigned long long maxUnsigned64 = (unsigned long long)(-1);
+                state = StateInit(1);
+
+                // setting up readable characters the new state can read
+                // this state can read all characters as it is the any character operator
+                // except for the '\0' character
+                state->Transitions[0].ReadableChars.Set[0] = maxUnsigned64 ^ zeroBitIndex;
+                state->Transitions[0].ReadableChars.Set[1] = maxUnsigned64;
+                state->Transitions[0].ReadableChars.Set[2] = maxUnsigned64;
+                state->Transitions[0].ReadableChars.Set[3] = maxUnsigned64;
+            
+                state->Id = counter++;
+
+                NFAFragment frag = {0};
+                frag.Start = state;
+                frag.DanglingTransitions = TransitionListInit(&state->Transitions[0]);
+
+                stack.Push(frag);
+            } break;
+
             default:
             {
+                unsigned int charSetIndex = postfix[i] / BIT_COUNT(long long); 
+                unsigned long long bitIndex = (long long) 1 << (postfix[i] % BIT_COUNT(long long)); 
                 state = StateInit(1);
-                state->Transitions[0].CharToBeRead = postfix[i];
+
+                // setting up readable characters the new state can read
+                // this state reads the specified character
+                state->Transitions[0].ReadableChars.Set[charSetIndex] = bitIndex;
             
                 state->Id = counter++;
 
@@ -474,6 +537,10 @@ int Match(NFA graph, char* input)
 
     for (; *input; input++)
     {
+        unsigned int charSetIndex = *input / BIT_COUNT(long long); 
+        unsigned int zeroSetIndex = '\0' / BIT_COUNT(long long); 
+        unsigned long long bitIndex = (long long) 1 << (*input % BIT_COUNT(long long)); 
+        unsigned long long zeroIndex = (long long) 1 << ('\0' % BIT_COUNT(long long)); 
         listId++;
         nextStates.Size = 0;
         for (int i = 0; i < currentStates.Size; i++)
@@ -482,12 +549,12 @@ int Match(NFA graph, char* input)
             for (int j = 0; j < currentState->NumberOfTransitions; j++)
             {
                 Transition currentTransition = currentState->Transitions[j];
-                if (currentTransition.CharToBeRead == *input)
+                if (currentTransition.ReadableChars.Set[charSetIndex] & bitIndex)
                 {
                     charRead = true;
                     AddState(&nextStates, currentTransition.Out, listId);
                 }
-                else if (currentTransition.CharToBeRead == '\0')
+                else if (currentTransition.ReadableChars.Set[zeroSetIndex] & zeroIndex)
                 {
                     AddState(&nextStates, currentTransition.Out, listId);
                 }
