@@ -10,7 +10,8 @@
 		{
 			"type": "shell",
 			"label": "build",
-			"command": "build.bat"
+			"command": "build.bat",
+			"problemMatcher": "$msCompile"
 		}
 	]
 }
