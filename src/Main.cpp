@@ -15,15 +15,18 @@ int main ()
 {
     _CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
 
-    char regex[] = "abcd+e";
+    char regex[] = "a--?-s*";
 
     char *postfix = Regex2Postfix(regex);
 
     NFA graph = Postfix2NFA(postfix);
 
-    int matched = Match(graph, "ab");
-    matched = Match(graph, "abce");
-    matched = Match(graph, "abcddddde");
+    int matched = Match(graph, "a--sss");
+    RE_INFO("match result: the regex: %s, %s with string: %s", regex, matched ? "matched":"did not match", "a--sss");
+    matched = Match(graph, "a");
+    RE_INFO("match result: the regex: %s, %s with string: %s", regex, matched ? "matched":"did not match", "a");
+    matched = Match(graph, "a---sss");
+    RE_INFO("match result: the regex: %s, %s with string: %s", regex, matched ? "matched":"did not match", "a---sss");
 
     free(postfix);
     NFAFree(graph);
