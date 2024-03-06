@@ -2,6 +2,7 @@
 #ifndef AUTOMATATEST_H
 #define AUTOMATATEST_H
 
+#include "ArrayQueue.hpp"
 #include "ArrayStack.hpp"
 
 // returns values > 0 if key is a regex op, 0 if key is not a regex op.
@@ -438,18 +439,31 @@ NFA Postfix2NFA(char* postfix)
 
 void AddState(ArrayList<State*>* list, State* state, int listId)
 {
-    if (!state || state->ListId == listId)
+    ArrayQueue<State*> queue = {0};
+    queue.Push(state);
+
+    for (;queue.List.Size > 0;)
     {
-        return;
+        State* current = queue.Pop();
+
+        if (!current || current->ListId == listId)
+        {
+            continue;
+        }
+        
+        current->ListId = listId;
+        
+        if (current->NumberOfTransitions == 2)
+        {
+            queue.Push(current->Transitions[0].Out);
+            queue.Push(current->Transitions[1].Out);
+            continue;
+        }
+        
+        list->Add(current);
     }
-    state->ListId = listId;
-    if (state->NumberOfTransitions == 2)
-    {
-        AddState(list, state->Transitions[0].Out, listId);
-        AddState(list, state->Transitions[1].Out, listId);
-        return;
-    }
-    list->Add(state);
+
+    queue.Free();
 }
 
 int IsMatch(ArrayList<State*>* currentStates)
