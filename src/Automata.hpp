@@ -4,6 +4,7 @@
 
 #include "ArrayQueue.hpp"
 #include "ArrayStack.hpp"
+#include "ArrayQueue.hpp"
 #define BIT_COUNT(x) (sizeof(x) * 8)
 
 // returns values > 0 if key is a regex op, 0 if key is not a regex op.
@@ -53,15 +54,16 @@ char* Regex2Postfix(char* regex)
     {
         char currentChar = regex[i];
         char nextChar = regex[i + 1];
-        int currentPrecedence = IsRegexOperator(currentChar); 
-        int nextPrecedence = IsRegexOperator(nextChar);
+        int currentPrecedence = IsRegexOperator(currentChar) == 2 ? 0: IsRegexOperator(currentChar); 
+        // it is impossible to read a concat operator because it is an implicit operator.
+        int nextPrecedence = IsRegexOperator(nextChar) == 2 ? 0 : IsRegexOperator(nextChar);
                 
         if (implicitOperatorFound) // concat operator is the implicit operator.
         {
             nextChar = currentChar;
             currentChar = '-';
             currentPrecedence = IsRegexOperator(currentChar);
-            nextPrecedence = IsRegexOperator(nextChar);
+            nextPrecedence = IsRegexOperator(nextChar) == 2 ? 0 : IsRegexOperator(nextChar);
             i--;
             implicitOperatorFound = false;
         }
@@ -95,6 +97,26 @@ char* Regex2Postfix(char* regex)
         {
             operators.Push('(');
         }
+        else if (currentChar == '-')
+        {
+            postfix.Add('\\');
+            postfix.Add('-');
+
+            // nextchar is not an operator, zero char, right parenthesis
+            if (!nextPrecedence && nextChar && nextChar != ')')
+            {
+                implicitOperatorFound = true;
+            }
+        }
+        else if (currentChar == '\\')
+        {
+            postfix.Add(regex[i]);
+            if (nextPrecedence)
+            {
+                postfix.Add(regex[i + 1]);
+                i++;
+            }
+        }
         else if (currentChar == ')')
         {
             while (operators.Peek() != '(')
@@ -108,7 +130,7 @@ char* Regex2Postfix(char* regex)
         {
             postfix.Add(regex[i]);
             
-            // nextchar is not an operator, zero char and right parenthesis
+            // nextchar is not an operator, zero char, right parenthesis
             if (!nextPrecedence && nextChar && nextChar != ')')
             {
                 implicitOperatorFound = true;
@@ -149,16 +171,9 @@ struct State
 
 union CharSet
 {
-    struct 
-    {
-        unsigned long long LowLow;
-        unsigned long long LowHigh;
-        unsigned long long HighLow;
-        unsigned long long HighHigh;
-    };
+    // Character set for ASCII
     unsigned long long Set[4];
 };
-
 
 struct Transition
 {
@@ -441,6 +456,31 @@ NFA Postfix2NFA(char* postfix)
                 frag.DanglingTransitions = TransitionListInit(&state->Transitions[0]);
 
                 stack.Push(frag);
+            } break;
+
+            case '\\':
+            {
+                if (!IsRegexOperator(postfix[i + 1]))
+                {
+                    continue;
+                }
+                
+                unsigned int charSetIndex = postfix[i + 1] / BIT_COUNT(long long); 
+                unsigned long long bitIndex = (long long) 1 << (postfix[i + 1] % BIT_COUNT(long long)); 
+                state = StateInit(1);
+
+                // setting up readable characters the new state can read
+                // this state reads the specified character
+                state->Transitions[0].ReadableChars.Set[charSetIndex] = bitIndex;
+            
+                state->Id = counter++;
+
+                NFAFragment frag = {0};
+                frag.Start = state;
+                frag.DanglingTransitions = TransitionListInit(&state->Transitions[0]);
+
+                stack.Push(frag);
+                i++;
             } break;
 
             default:
