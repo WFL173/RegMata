@@ -49,6 +49,7 @@ char* Regex2Postfix(char* regex)
     }
 
     bool implicitOperatorFound = false;
+    bool escapeCharacterFound = false;
 
     for (int i = 0; regex[i]; i++)
     {
@@ -93,6 +94,18 @@ char* Regex2Postfix(char* regex)
             }
             
         }
+        else if (escapeCharacterFound)
+        {
+            postfix.Add(regex[i]);
+            
+            // nextchar is not an operator, zero char, right parenthesis
+            if (!nextPrecedence && nextChar && nextChar != ')')
+            {
+                implicitOperatorFound = true;
+            }
+
+            escapeCharacterFound = false;
+        }
         else if (currentChar == '(')
         {
             operators.Push('(');
@@ -111,11 +124,7 @@ char* Regex2Postfix(char* regex)
         else if (currentChar == '\\')
         {
             postfix.Add(regex[i]);
-            if (nextPrecedence)
-            {
-                postfix.Add(regex[i + 1]);
-                i++;
-            }
+            escapeCharacterFound = true;
         }
         else if (currentChar == ')')
         {
@@ -460,7 +469,7 @@ NFA Postfix2NFA(char* postfix)
 
             case '\\':
             {
-                if (!IsRegexOperator(postfix[i + 1]))
+                if (!IsRegexOperator(postfix[i + 1]) && postfix[i + 1] != '\\')
                 {
                     continue;
                 }
