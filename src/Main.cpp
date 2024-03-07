@@ -1,7 +1,9 @@
+#ifdef WINDEBUG
 #include <crtdbg.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include "Automata.hpp"
 
 #define ArrayCount(x) sizeof((x)) / sizeof((x)[0])
@@ -13,7 +15,9 @@
 
 int main ()
 {
+    #ifdef WINDEBUG
     _CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
+    #endif
 
     char regex[] = "a--?-s*";
 
