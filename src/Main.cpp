@@ -21,7 +21,8 @@ int main ()
 
     NFA graph = Postfix2NFA(postfix);
 
-    int matched = Match(graph, "a--sss");
+    int matched;
+    matched = Match(graph, "a--sss");
     RE_INFO("match result: the regex: %s, %s with string: %s", regex, matched ? "matched":"did not match", "a--sss");
     matched = Match(graph, "a");
     RE_INFO("match result: the regex: %s, %s with string: %s", regex, matched ? "matched":"did not match", "a");

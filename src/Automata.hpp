@@ -4,7 +4,6 @@
 
 #include "ArrayQueue.hpp"
 #include "ArrayStack.hpp"
-#include "ArrayQueue.hpp"
 #define BIT_COUNT(x) (sizeof(x) * 8)
 
 // returns values > 0 if key is a regex op, 0 if key is not a regex op.
