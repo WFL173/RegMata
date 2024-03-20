@@ -17,6 +17,27 @@
             "console": "integratedTerminal",
             "preLaunchTask": "build",
             "visualizerFile": "${workspaceFolder}\\visualizers\\Automata.natvis"
+        },        
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/Main.out",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "visualizerFile": "${workspaceFolder}/visualizers/Automata.natvis",
+            "setupCommands": 
+            [
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
         }
 
     ]
