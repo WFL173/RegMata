@@ -1,10 +1,12 @@
 # RegMata
-RegMata is a library that uses graph and automata theory to automate the process of compiling state machines, written in C++. This project has been inspired by a CACM paper about a regular expression search algorithm written in 1968 by Ken Thompson and a post about [regular expression matching](https://swtch.com/~rsc/regexp/regexp1.html) by Russ Cox. 
+RegMata is a header library that uses graph and automata theory to automate the process of compiling state machines, written in C++. This project has been inspired by a CACM paper about a regular expression search algorithm written in 1968 by Ken Thompson and a post about [regular expression matching](https://swtch.com/~rsc/regexp/regexp1.html) by Russ Cox. 
+
+To add this library to your C++ project, just copy all the .hpp files in the src folder into your project and include the Automata.hpp file.
 
 **Warning: this is a project made for my personal use. Use  it at your own risk.**
 
 ## Building
-This project uses build scripts to build. The project currently has no platform specific dependencies. 
+This library is platform agnostic, therefore you can use this library on any OS. To include this library it is sufficient to just copy all the .hpp files and then to include Automata.hpp. However if you want to run the tests this project uses you can use the build scripts provided to build. 
 
 ### Windows
 Windows does not come pre-installed with a default compiler. Therefore, to compile for Windows, build tools for visual studio will be necessary. These tools can be downloaded from [here](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022) under tools for visual studio > build tools for visual studio. After downloading the tools open the x64 native tools command prompt or if you already have visual studio installed you can open a command prompt and call vcvarsall.bat located in your visual studio files to setup the build environment in the command prompt. In the command prompt you just configured, change your current working directory to the RegMata folder and run the commands below and the project will be built and run.
